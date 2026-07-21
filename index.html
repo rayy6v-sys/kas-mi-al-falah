@@ -46,7 +46,10 @@
 
         <!-- Tab Siswa -->
         <div id="tabSiswaContent" class="space-y-3">
-            <input type="text" id="search" oninput="renderSiswa()" placeholder="Cari nama siswa..." class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-emerald-600">
+            <div class="flex gap-2">
+                <input type="text" id="search" oninput="renderSiswa()" placeholder="Cari nama siswa..." class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-emerald-600">
+                <button onclick="salinRekapWA()" class="bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap active:scale-95 transition shadow-sm">📋 Salin Rekap WA</button>
+            </div>
             <div id="listSiswa" class="space-y-2"></div>
         </div>
 
@@ -147,11 +150,39 @@
                 div.innerHTML = `
                     <div>
                         <div class="text-xs font-bold text-slate-800">${s.nama}</div>
-                        <div class="text-[11px] text-slate-500">${lunasCount === 12 ? '✨ Lunas 12 Bulan' : 'Sudah bayar: ' + lunasCount + ' / 12 Bulan'}</div>
+                        <div class="text-[11px] text-slate-500">${lunasCount === 0 ? '❌ Belum bayar (0 Bln)' : (lunasCount === 12 ? '✨ Lunas 12 Bulan' : 'Sudah bayar: ' + lunasCount + ' / 12 Bulan')}</div>
                     </div>
                     <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">Atur</span>
                 `;
                 container.appendChild(div);
+            });
+        }
+
+        function salinRekapWA() {
+            let totalMasuk = db.pemasukan.reduce((a, b) => a + Number(b.jml), 0);
+            let totalKeluar = db.pengeluaran.reduce((a, b) => a + Number(b.jml), 0);
+            let saldoAkhir = totalMasuk - totalKeluar;
+
+            let text = `📢 *REKAP KAS SISWA MI AL-FALAH* 📢\n`;
+            text += `Periode 2026/2027 · Rp 5.000/bulan\n\n`;
+            text += `💰 *Total Saldo Kas:* ${formatRp(saldoAkhir)}\n\n`;
+            text += `📋 *Status Pembayaran Siswa:*\n`;
+
+            db.siswa.forEach((s, i) => {
+                let lunasCount = s.bulan.filter(Boolean).length;
+                let statusIcon = lunasCount === 0 ? "❌ Belum bayar (0 bln)" : (lunasCount === 12 ? "✅ Lunas 12 Bln" : `${lunasCount}/12 Bln`);
+                text += `${i + 1}. ${s.nama} - *${statusIcon}*\n`;
+            });
+
+            text += `\n⏰ *Paling lambat tanggal 10 tiap bulan*\n`;
+            text += `🏦 Transfer BCA: 6260316379 (a.n. Nuraeni)\n`;
+            text += `💵 Cash: Mama Adeeva / Mama Fahri / Mama Syakila\n\n`;
+            text += `_Laporan otomatis dari Buku Kas MI Al-Falah_`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert("✅ Rekap berhasil disalin! Silakan langsung paste (tempel) di grup WhatsApp.");
+            }).catch(err => {
+                alert("Gagal menyalin teks.");
             });
         }
 
@@ -265,5 +296,4 @@
         render();
     </script>
 </body>
-    </html>
-    
+</html>
